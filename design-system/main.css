@@ -9,6 +9,7 @@
 @import './forms.css';
 @import './landing.css';
 @import './jobs.css';
+@import './digest.css';
 
 /* Utility Classes */
 .container {

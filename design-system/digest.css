@@ -1,0 +1,146 @@
+/* KodNest Premium Build System - Digest Styles */
+
+.digest-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.digest-card {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+}
+
+.digest-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.1);
+}
+
+.digest-header__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-3xl);
+  font-weight: 400;
+  line-height: var(--line-height-tight);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: -0.01em;
+}
+
+.digest-header__date {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  opacity: 0.7;
+}
+
+.digest-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.digest-job {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.05);
+}
+
+.digest-job:last-child {
+  border-bottom: none;
+}
+
+.digest-job__title {
+  font-family: var(--font-body);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.digest-job__company {
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  opacity: 0.8;
+  margin-bottom: var(--spacing-sm);
+}
+
+.digest-job__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.digest-job__meta-item {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  opacity: 0.7;
+}
+
+.digest-job__actions {
+  margin-top: var(--spacing-sm);
+}
+
+.digest-footer {
+  text-align: center;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid rgba(17, 17, 17, 0.1);
+  margin-top: var(--spacing-xl);
+}
+
+.digest-footer__text {
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  opacity: 0.6;
+  margin-bottom: var(--spacing-md);
+}
+
+.digest-footer__note {
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  opacity: 0.5;
+  font-style: italic;
+}
+
+.digest-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+  margin-top: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.digest-generate-section {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+@media (max-width: 768px) {
+  .digest-card {
+    padding: var(--spacing-md);
+  }
+
+  .digest-header__title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .digest-job__title {
+    font-size: var(--font-size-lg);
+  }
+
+  .digest-actions {
+    flex-direction: column;
+  }
+
+  .digest-actions .btn {
+    width: 100%;
+  }
+}
