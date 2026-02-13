@@ -18,11 +18,19 @@ class Router {
       '/settings': 'Settings',
       '/proof': 'Proof',
       '/jt/07-test': 'Test',
-      '/jt/08-ship': 'Ship'
+      '/jt/08-ship': 'Ship',
+      '/jt/proof': 'ProofFinal'
     };
 
-    // Handle initial route
-    this.handleRoute();
+    // Handle initial route after a tick so location.pathname is correct (fixes direct load to /jt/07-test etc.)
+    const runInitial = () => {
+      this.handleRoute();
+    };
+    if (typeof requestAnimationFrame !== 'undefined') {
+      requestAnimationFrame(runInitial);
+    } else {
+      setTimeout(runInitial, 0);
+    }
 
     // Handle browser back/forward
     window.addEventListener('popstate', () => {
@@ -89,12 +97,15 @@ class Router {
   navigate(path) {
     // Check ship lock
     if (path === '/jt/08-ship') {
-      if (window.testManager && !window.testManager.getAllTestsPassed()) {
-        alert('All tests must pass before shipping. Complete the test checklist first.');
+      const testsOk = window.testManager && window.testManager.getAllTestsPassed();
+      const linksOk = window.proofManager && window.proofManager.allLinksProvided();
+      if (!testsOk || !linksOk) {
+        if (!testsOk) alert('All tests must pass before shipping. Complete the test checklist first.');
+        else if (!linksOk) alert('Provide all three proof links (Project, GitHub, Deployed URL) on the Proof page before shipping.');
         return;
       }
     }
-    
+
     if (this.routes[path]) {
       window.history.pushState({}, '', path);
       this.currentRoute = path;
@@ -103,20 +114,24 @@ class Router {
   }
 
   handleRoute() {
-    const path = window.location.pathname;
-    
+    let path = window.location.pathname;
+    if (path.length > 1 && path.endsWith('/')) {
+      path = path.slice(0, -1);
+    }
+
     // Check ship lock
     if (path === '/jt/08-ship') {
-      if (window.testManager && !window.testManager.getAllTestsPassed()) {
-        // Redirect to test page if not all tests passed
-        window.history.replaceState({}, '', '/jt/07-test');
-        this.currentRoute = '/jt/07-test';
-        this.render('Test');
+      const testsOk = window.testManager && window.testManager.getAllTestsPassed();
+      const linksOk = window.proofManager && window.proofManager.allLinksProvided();
+      if (!testsOk || !linksOk) {
+        window.history.replaceState({}, '', '/jt/proof');
+        this.currentRoute = '/jt/proof';
+        this.render('ProofFinal');
         this.updateNavigation();
         return;
       }
     }
-    
+
     const route = this.routes[path] || this.routes['/'];
     
     this.currentRoute = path;
@@ -172,10 +187,18 @@ class Router {
         container.innerHTML = this.renderProof();
         break;
       case 'Test':
-        container.innerHTML = this.renderTest();
+        try {
+          container.innerHTML = this.renderTest();
+        } catch (e) {
+          container.innerHTML = '<div class="page-container"><p class="page-subtext">Error loading test checklist. Open the browser console (F12) for details.</p></div>';
+          console.error('Test page render error:', e);
+        }
         break;
       case 'Ship':
         container.innerHTML = this.renderShip();
+        break;
+      case 'ProofFinal':
+        container.innerHTML = this.renderProofFinal();
         break;
       default:
         container.innerHTML = this.renderDashboard();
@@ -963,6 +986,125 @@ class Router {
     `;
   }
 
+  renderProofFinal() {
+    if (!window.proofManager) {
+      return '<div class="page-container"><p>Loading...</p></div>';
+    }
+
+    const artifacts = window.proofManager.getArtifacts();
+    const shipStatus = window.proofManager.getShipStatus();
+    const stepStatus = window.proofManager.getStepCompletionStatus();
+
+    const statusBadgeClass = shipStatus === 'Shipped' ? 'badge-success' : shipStatus === 'In Progress' ? 'badge-warning' : 'badge-default';
+
+    const stepItems = stepStatus.map(step => `
+      <div class="proof-step">
+        <span class="proof-step__label">${step.label}</span>
+        <span class="proof-step__status ${step.status === 'Completed' ? 'proof-step__status--completed' : 'proof-step__status--pending'}">${step.status}</span>
+      </div>
+    `).join('');
+
+    return `
+      <div class="page-container">
+        <div class="page-header">
+          <h1 class="page-title">Proof & Submission</h1>
+        </div>
+        <div class="proof-final-container">
+          <h2 class="proof-final__project-title">Project 1 — Job Notification Tracker</h2>
+
+          <div class="proof-status-badge-wrap">
+            <span class="badge ${statusBadgeClass}">${shipStatus}</span>
+          </div>
+
+          <div class="proof-section">
+            <h3 class="proof-section__title">A) Step Completion Summary</h3>
+            <div class="proof-step-list">
+              ${stepItems}
+            </div>
+          </div>
+
+          <div class="proof-section proof-artifacts">
+            <h3 class="proof-section__title">B) Artifact Collection</h3>
+            <div class="form-group">
+              <label class="form-label" for="proof-project-link">Project Link</label>
+              <input type="url" id="proof-project-link" class="form-input" placeholder="https://..." value="${(artifacts.projectLink || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">
+              <span id="proof-project-link-error" class="form-error" style="display: none;">Please enter a valid URL.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="proof-github-link">GitHub Repository Link</label>
+              <input type="url" id="proof-github-link" class="form-input" placeholder="https://github.com/..." value="${(artifacts.githubLink || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">
+              <span id="proof-github-link-error" class="form-error" style="display: none;">Please enter a valid URL.</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="proof-deployed-url">Deployed URL (Vercel or equivalent)</label>
+              <input type="url" id="proof-deployed-url" class="form-input" placeholder="https://..." value="${(artifacts.deployedUrl || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')}">
+              <span id="proof-deployed-url-error" class="form-error" style="display: none;">Please enter a valid URL.</span>
+            </div>
+            <button class="btn btn-secondary" onclick="window.router.saveProofArtifacts()">Save Links</button>
+          </div>
+
+          <div class="proof-actions">
+            <button class="btn btn-primary" onclick="window.router.copyFinalSubmission()">Copy Final Submission</button>
+          </div>
+
+          ${shipStatus === 'Shipped' ? '<p class="ship-confirmation">Project 1 Shipped Successfully.</p><p class="ship-confirmation-subtle">All links provided and all tests passed.</p>' : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  saveProofArtifacts() {
+    if (!window.proofManager) return;
+
+    const projectLink = document.getElementById('proof-project-link').value.trim();
+    const githubLink = document.getElementById('proof-github-link').value.trim();
+    const deployedUrl = document.getElementById('proof-deployed-url').value.trim();
+
+    let hasError = false;
+    const setError = (id, show) => {
+      const el = document.getElementById(id);
+      const input = id.replace('-error', '');
+      if (el) el.style.display = show ? 'block' : 'none';
+      const inputEl = document.getElementById(input);
+      if (inputEl) inputEl.classList.toggle('form-input--error', show);
+    };
+
+    if (projectLink && !window.proofManager.isValidUrl(projectLink)) {
+      setError('proof-project-link-error', true);
+      hasError = true;
+    } else {
+      setError('proof-project-link-error', false);
+    }
+    if (githubLink && !window.proofManager.isValidUrl(githubLink)) {
+      setError('proof-github-link-error', true);
+      hasError = true;
+    } else {
+      setError('proof-github-link-error', false);
+    }
+    if (deployedUrl && !window.proofManager.isValidUrl(deployedUrl)) {
+      setError('proof-deployed-url-error', true);
+      hasError = true;
+    } else {
+      setError('proof-deployed-url-error', false);
+    }
+
+    if (hasError) return;
+
+    window.proofManager.setArtifacts({ projectLink, githubLink, deployedUrl });
+    if (this.currentRoute === '/jt/proof') this.render('ProofFinal');
+  }
+
+  copyFinalSubmission() {
+    if (!window.proofManager) return;
+    const text = window.proofManager.getFormattedSubmission();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => alert('Final submission copied to clipboard.')).catch(() => this.fallbackCopyToClipboard(text));
+    } else {
+      this.fallbackCopyToClipboard(text);
+      alert('Final submission copied to clipboard.');
+    }
+  }
+
   renderTest() {
     if (!window.testManager) {
       return '<div class="page-container"><p>Loading test checklist...</p></div>';
@@ -1023,17 +1165,22 @@ class Router {
   }
 
   renderShip() {
-    const allPassed = window.testManager ? window.testManager.getAllTestsPassed() : false;
+    const testsOk = window.testManager ? window.testManager.getAllTestsPassed() : false;
+    const linksOk = window.proofManager ? window.proofManager.allLinksProvided() : false;
+    const canShip = testsOk && linksOk;
 
-    if (!allPassed) {
+    if (!canShip) {
+      const message = !testsOk
+        ? 'All tests must pass before shipping. Complete the test checklist first.'
+        : 'Provide all three proof links (Project, GitHub, Deployed URL) on the Proof page before shipping.';
+      const buttonRoute = !testsOk ? '/jt/07-test' : '/jt/proof';
+      const buttonLabel = !testsOk ? 'Go to Test Checklist' : 'Go to Proof';
       return `
         <div class="page-container">
           <div class="ship-locked">
             <h1 class="ship-locked__title">Ship Locked</h1>
-            <p class="ship-locked__message">
-              All tests must pass before shipping. Complete the test checklist first.
-            </p>
-            <button class="btn btn-primary" data-route="/jt/07-test">Go to Test Checklist</button>
+            <p class="ship-locked__message">${message}</p>
+            <button class="btn btn-primary" data-route="${buttonRoute}">${buttonLabel}</button>
           </div>
         </div>
       `;
@@ -1042,10 +1189,8 @@ class Router {
     return `
       <div class="page-container">
         <div class="ship-unlocked">
-          <h1 class="ship-unlocked__title">Ready to Ship</h1>
-          <p class="ship-unlocked__message">
-            All tests have passed. The application is ready for deployment.
-          </p>
+          <h1 class="ship-unlocked__title">Project 1 Shipped Successfully.</h1>
+          <p class="ship-confirmation-subtle">All links provided and all tests passed. The application is ready for deployment.</p>
         </div>
       </div>
     `;

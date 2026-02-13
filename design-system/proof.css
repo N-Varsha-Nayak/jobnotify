@@ -1,0 +1,108 @@
+/* KodNest Premium Build System - Proof Page Styles */
+
+.proof-final-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.proof-final__project-title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-3xl);
+  font-weight: 400;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xl);
+}
+
+.proof-section {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.proof-section__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.proof-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.proof-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.05);
+}
+
+.proof-step:last-child {
+  border-bottom: none;
+}
+
+.proof-step__label {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+}
+
+.proof-step__status {
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.proof-step__status--completed {
+  color: var(--color-success);
+}
+
+.proof-step__status--pending {
+  color: var(--color-text-primary);
+  opacity: 0.6;
+}
+
+.proof-artifacts .form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.proof-artifacts .form-input--error {
+  border-color: var(--color-accent);
+}
+
+.proof-artifacts .form-error {
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-accent);
+  margin-top: var(--spacing-xs);
+}
+
+.proof-status-badge-wrap {
+  margin-bottom: var(--spacing-lg);
+}
+
+.proof-actions {
+  margin-top: var(--spacing-lg);
+}
+
+.ship-confirmation {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-success);
+  margin-top: var(--spacing-md);
+  font-weight: 500;
+}
+
+.ship-confirmation-subtle {
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  opacity: 0.7;
+  margin-top: var(--spacing-sm);
+}

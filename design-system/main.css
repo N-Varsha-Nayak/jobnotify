@@ -12,6 +12,7 @@
 @import './digest.css';
 @import './status.css';
 @import './test.css';
+@import './proof.css';
 
 /* Utility Classes */
 .container {
