@@ -10,10 +10,12 @@ class JobsManager {
       mode: '',
       experience: '',
       source: '',
-      sort: 'latest'
+      sort: 'latest',
+      showOnlyMatches: false
     };
     this.loadJobs();
     this.loadSavedJobs();
+    this.updateMatchScores();
   }
 
   loadJobs() {
@@ -54,8 +56,27 @@ class JobsManager {
     this.applyFilters();
   }
 
+  updateMatchScores() {
+    // Calculate match scores for all jobs
+    if (window.matchScorer && window.preferencesManager) {
+      const prefs = window.preferencesManager.getPreferences();
+      window.matchScorer.updatePreferences(prefs);
+      
+      this.jobs.forEach(job => {
+        job.matchScore = window.matchScorer.calculateMatchScore(job);
+      });
+    } else {
+      this.jobs.forEach(job => {
+        job.matchScore = 0;
+      });
+    }
+  }
+
   applyFilters() {
     let filtered = [...this.jobs];
+
+    // Update match scores before filtering
+    this.updateMatchScores();
 
     // Keyword filter (title/company)
     if (this.filters.keyword) {
@@ -86,11 +107,28 @@ class JobsManager {
       filtered = filtered.filter(job => job.source === this.filters.source);
     }
 
+    // Show only matches filter
+    if (this.filters.showOnlyMatches && window.preferencesManager) {
+      const prefs = window.preferencesManager.getPreferences();
+      const minScore = prefs.minMatchScore || 40;
+      filtered = filtered.filter(job => (job.matchScore || 0) >= minScore);
+    }
+
     // Sort
     if (this.filters.sort === 'latest') {
       filtered.sort((a, b) => a.postedDaysAgo - b.postedDaysAgo);
     } else if (this.filters.sort === 'oldest') {
       filtered.sort((a, b) => b.postedDaysAgo - a.postedDaysAgo);
+    } else if (this.filters.sort === 'match') {
+      filtered.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+    } else if (this.filters.sort === 'salary') {
+      filtered.sort((a, b) => {
+        const extractSalary = (str) => {
+          const match = str.match(/(\d+)/);
+          return match ? parseInt(match[1]) : 0;
+        };
+        return extractSalary(b.salaryRange) - extractSalary(a.salaryRange);
+      });
     }
 
     this.filteredJobs = filtered;
@@ -112,3 +150,12 @@ class JobsManager {
 
 // Initialize jobs manager
 window.jobsManager = new JobsManager();
+
+// Update match scores after preferences are loaded
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.jobsManager && window.preferencesManager && window.matchScorer) {
+    const prefs = window.preferencesManager.getPreferences();
+    window.matchScorer.updatePreferences(prefs);
+    window.jobsManager.updateMatchScores();
+  }
+});

@@ -45,6 +45,14 @@ class Router {
           this.render('Dashboard');
         }
       }
+      
+      // Handle show only matches toggle
+      if (e.target.matches('#show-only-matches')) {
+        window.jobsManager.setFilter('showOnlyMatches', e.target.checked);
+        if (this.currentRoute === '/dashboard') {
+          this.render('Dashboard');
+        }
+      }
     });
 
     // Handle keyword input (debounced)
@@ -59,7 +67,21 @@ class Router {
           }
         }, 300);
       }
+      
+      // Handle slider value update
+      if (e.target.matches('#min-match-score')) {
+        const valueDisplay = document.getElementById('min-match-score-value');
+        if (valueDisplay) {
+          valueDisplay.textContent = e.target.value;
+        }
+      }
     });
+
+    // Initialize preferences in match scorer
+    if (window.preferencesManager && window.matchScorer) {
+      const prefs = window.preferencesManager.getPreferences();
+      window.matchScorer.updatePreferences(prefs);
+    }
   }
 
   navigate(path) {
@@ -157,6 +179,31 @@ class Router {
     const locations = window.jobsManager.getUniqueLocations();
     const sources = window.jobsManager.getUniqueSources();
     const filters = window.jobsManager.filters;
+    const hasPreferences = window.preferencesManager ? window.preferencesManager.hasPreferences() : false;
+    const prefs = window.preferencesManager ? window.preferencesManager.getPreferences() : null;
+
+    // Banner if no preferences
+    let banner = '';
+    if (!hasPreferences) {
+      banner = `
+        <div class="preferences-banner">
+          <p class="preferences-banner__text">Set your preferences to activate intelligent matching. <a href="/settings" data-route="/settings" style="color: var(--color-accent); text-decoration: underline;">Go to Settings</a></p>
+        </div>
+      `;
+    }
+
+    // Toggle for show only matches
+    let toggleSection = '';
+    if (hasPreferences) {
+      toggleSection = `
+        <div style="padding: var(--spacing-md); background-color: #FFFFFF; border-bottom: 1px solid rgba(17, 17, 17, 0.1);">
+          <div class="checkbox-item">
+            <input type="checkbox" id="show-only-matches" ${filters.showOnlyMatches ? 'checked' : ''}>
+            <label for="show-only-matches" class="checkbox-item-label">Show only jobs above my threshold (${prefs ? prefs.minMatchScore : 40}+)</label>
+          </div>
+        </div>
+      `;
+    }
 
     let filterBar = `
       <div class="filter-bar">
@@ -208,6 +255,8 @@ class Router {
           <select class="filter-select" id="filter-sort">
             <option value="latest" ${filters.sort === 'latest' ? 'selected' : ''}>Latest First</option>
             <option value="oldest" ${filters.sort === 'oldest' ? 'selected' : ''}>Oldest First</option>
+            <option value="match" ${filters.sort === 'match' ? 'selected' : ''}>Match Score</option>
+            <option value="salary" ${filters.sort === 'salary' ? 'selected' : ''}>Salary (High to Low)</option>
           </select>
         </div>
       </div>
@@ -215,10 +264,13 @@ class Router {
 
     let jobsGrid = '';
     if (jobs.length === 0) {
+      const emptyMessage = filters.showOnlyMatches && hasPreferences 
+        ? 'No roles match your criteria. Adjust filters or lower threshold.'
+        : 'Try adjusting your filters to see more results.';
       jobsGrid = `
         <div class="empty-state">
           <div class="empty-state__title">No jobs found</div>
-          <div class="empty-state__message">Try adjusting your filters to see more results.</div>
+          <div class="empty-state__message">${emptyMessage}</div>
         </div>
       `;
     } else {
@@ -234,6 +286,8 @@ class Router {
         <div class="page-header">
           <h1 class="page-title">Dashboard</h1>
         </div>
+        ${banner}
+        ${toggleSection}
         ${filterBar}
         ${jobsGrid}
       </div>
@@ -245,6 +299,14 @@ class Router {
     const postedText = job.postedDaysAgo === 0 ? 'Today' : 
                       job.postedDaysAgo === 1 ? '1 day ago' : 
                       `${job.postedDaysAgo} days ago`;
+    
+    // Get match score badge
+    const matchScore = job.matchScore || 0;
+    const badgeStyle = window.matchScorer ? window.matchScorer.getScoreBadgeStyle(matchScore) : {};
+    const badgeClass = window.matchScorer ? window.matchScorer.getScoreBadgeClass(matchScore) : 'badge-default';
+    const matchScoreBadge = window.preferencesManager && window.preferencesManager.hasPreferences() 
+      ? `<span class="badge ${badgeClass}" style="background-color: ${badgeStyle.backgroundColor}; color: ${badgeStyle.color};">Match: ${matchScore}</span>`
+      : '';
 
     return `
       <div class="job-card">
@@ -253,7 +315,10 @@ class Router {
             <h3 class="job-card__title">${job.title}</h3>
             <div class="job-card__company">${job.company}</div>
           </div>
-          <span class="badge badge-accent">${job.source}</span>
+          <div style="display: flex; flex-direction: column; gap: var(--spacing-xs); align-items: flex-end;">
+            <span class="badge badge-accent">${job.source}</span>
+            ${matchScoreBadge}
+          </div>
         </div>
         <div class="job-card__meta">
           <span class="job-card__meta-item">📍 ${job.location}</span>
@@ -299,6 +364,11 @@ class Router {
             <span class="modal__meta-item">${job.experience}</span>
             <span class="modal__meta-item">${job.salaryRange}</span>
             <span class="badge badge-accent">${job.source}</span>
+            ${window.preferencesManager && window.preferencesManager.hasPreferences() && job.matchScore ? (() => {
+              const badgeStyle = window.matchScorer.getScoreBadgeStyle(job.matchScore);
+              const badgeClass = window.matchScorer.getScoreBadgeClass(job.matchScore);
+              return `<span class="badge ${badgeClass}" style="background-color: ${badgeStyle.backgroundColor}; color: ${badgeStyle.color};">Match: ${job.matchScore}</span>`;
+            })() : ''}
           </div>
           <div class="modal__section">
             <div class="modal__section-title">Description</div>
@@ -350,13 +420,16 @@ class Router {
   }
 
   renderSettings() {
+    const prefs = window.preferencesManager ? window.preferencesManager.getPreferences() : window.preferencesManager.getDefaultPreferences();
+    const locations = window.jobsManager ? window.jobsManager.getUniqueLocations() : [];
+
     return `
       <div class="page-container">
         <div class="page-header">
           <h1 class="page-title">Settings</h1>
           <p class="page-subtext">Configure your job tracking preferences.</p>
         </div>
-        <div class="card" style="max-width: 600px;">
+        <div class="card" style="max-width: 700px;">
           <div class="form-section">
             <h2 class="form-section-title">Preferences</h2>
             
@@ -366,48 +439,124 @@ class Router {
                 type="text" 
                 id="role-keywords" 
                 class="form-input" 
-                placeholder="e.g., Software Engineer, Product Manager"
+                placeholder="e.g., Software Engineer, Product Manager, Developer"
+                value="${prefs.roleKeywords || ''}"
               >
-              <span class="form-help">Enter keywords or job titles you're interested in.</span>
+              <span class="form-help">Enter comma-separated keywords or job titles you're interested in.</span>
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="locations">Preferred Locations</label>
-              <input 
-                type="text" 
-                id="locations" 
-                class="form-input" 
-                placeholder="e.g., San Francisco, New York, Remote"
-              >
-              <span class="form-help">Enter cities or regions where you'd like to work.</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="mode">Mode</label>
-              <select id="mode" class="form-select">
-                <option value="">Select mode</option>
-                <option value="remote">Remote</option>
-                <option value="hybrid">Hybrid</option>
-                <option value="onsite">Onsite</option>
+              <label class="form-label" for="preferred-locations">Preferred Locations</label>
+              <select id="preferred-locations" class="form-select" multiple>
+                ${locations.map(loc => `<option value="${loc}" ${prefs.preferredLocations && prefs.preferredLocations.includes(loc) ? 'selected' : ''}>${loc}</option>`).join('')}
               </select>
-              <span class="form-help">Choose your preferred work arrangement.</span>
+              <span class="form-help">Hold Ctrl/Cmd to select multiple locations.</span>
             </div>
 
             <div class="form-group">
-              <label class="form-label" for="experience">Experience Level</label>
-              <select id="experience" class="form-select">
+              <label class="form-label">Preferred Mode</label>
+              <div class="checkbox-group">
+                <div class="checkbox-item">
+                  <input type="checkbox" id="mode-remote" value="Remote" ${prefs.preferredMode && prefs.preferredMode.includes('Remote') ? 'checked' : ''}>
+                  <label for="mode-remote" class="checkbox-item-label">Remote</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="mode-hybrid" value="Hybrid" ${prefs.preferredMode && prefs.preferredMode.includes('Hybrid') ? 'checked' : ''}>
+                  <label for="mode-hybrid" class="checkbox-item-label">Hybrid</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="mode-onsite" value="Onsite" ${prefs.preferredMode && prefs.preferredMode.includes('Onsite') ? 'checked' : ''}>
+                  <label for="mode-onsite" class="checkbox-item-label">Onsite</label>
+                </div>
+              </div>
+              <span class="form-help">Select one or more work arrangements.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="experience-level">Experience Level</label>
+              <select id="experience-level" class="form-select">
                 <option value="">Select experience level</option>
-                <option value="entry">Entry Level</option>
-                <option value="mid">Mid Level</option>
-                <option value="senior">Senior</option>
-                <option value="lead">Lead / Principal</option>
+                <option value="Fresher" ${prefs.experienceLevel === 'Fresher' ? 'selected' : ''}>Fresher</option>
+                <option value="0-1" ${prefs.experienceLevel === '0-1' ? 'selected' : ''}>0-1 years</option>
+                <option value="1-3" ${prefs.experienceLevel === '1-3' ? 'selected' : ''}>1-3 years</option>
+                <option value="3-5" ${prefs.experienceLevel === '3-5' ? 'selected' : ''}>3-5 years</option>
               </select>
               <span class="form-help">Select your experience level.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="skills">Skills</label>
+              <input 
+                type="text" 
+                id="skills" 
+                class="form-input" 
+                placeholder="e.g., React, Python, Java, Node.js"
+                value="${prefs.skills || ''}"
+              >
+              <span class="form-help">Enter comma-separated skills you have or want to work with.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Minimum Match Score</label>
+              <div class="slider-group">
+                <div class="slider-container">
+                  <input 
+                    type="range" 
+                    id="min-match-score" 
+                    class="slider" 
+                    min="0" 
+                    max="100" 
+                    value="${prefs.minMatchScore || 40}"
+                  >
+                  <span class="slider-value" id="min-match-score-value">${prefs.minMatchScore || 40}</span>
+                </div>
+                <span class="form-help">Only show jobs with match score above this threshold.</span>
+              </div>
+            </div>
+
+            <div style="margin-top: var(--spacing-lg);">
+              <button class="btn btn-primary" onclick="window.router.savePreferences()">Save Preferences</button>
             </div>
           </div>
         </div>
       </div>
     `;
+  }
+
+  savePreferences() {
+    const roleKeywords = document.getElementById('role-keywords').value.trim();
+    const locationsSelect = document.getElementById('preferred-locations');
+    const preferredLocations = Array.from(locationsSelect.selectedOptions).map(opt => opt.value);
+    const preferredMode = [];
+    if (document.getElementById('mode-remote').checked) preferredMode.push('Remote');
+    if (document.getElementById('mode-hybrid').checked) preferredMode.push('Hybrid');
+    if (document.getElementById('mode-onsite').checked) preferredMode.push('Onsite');
+    const experienceLevel = document.getElementById('experience-level').value;
+    const skills = document.getElementById('skills').value.trim();
+    const minMatchScore = parseInt(document.getElementById('min-match-score').value);
+
+    const preferences = {
+      roleKeywords,
+      preferredLocations,
+      preferredMode,
+      experienceLevel,
+      skills,
+      minMatchScore
+    };
+
+    window.preferencesManager.savePreferences(preferences);
+    window.matchScorer.updatePreferences(preferences);
+    
+    // Update match scores for all jobs
+    if (window.jobsManager) {
+      window.jobsManager.updateMatchScores();
+    }
+
+    // Show success message
+    alert('Preferences saved successfully!');
+
+    // Navigate to dashboard
+    this.navigate('/dashboard');
   }
 
   renderSaved() {
