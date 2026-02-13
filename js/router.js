@@ -4,6 +4,7 @@ class Router {
   constructor() {
     this.routes = {};
     this.currentRoute = '/';
+    this.openModalJobId = null;
     this.init();
   }
 
@@ -32,6 +33,31 @@ class Router {
         e.preventDefault();
         const route = e.target.getAttribute('data-route');
         this.navigate(route);
+      }
+    });
+
+    // Handle filter changes
+    document.addEventListener('change', (e) => {
+      if (e.target.matches('#filter-keyword, #filter-location, #filter-mode, #filter-experience, #filter-source, #filter-sort')) {
+        const filterType = e.target.id.replace('filter-', '');
+        window.jobsManager.setFilter(filterType, e.target.value);
+        if (this.currentRoute === '/dashboard') {
+          this.render('Dashboard');
+        }
+      }
+    });
+
+    // Handle keyword input (debounced)
+    let keywordTimeout;
+    document.addEventListener('input', (e) => {
+      if (e.target.matches('#filter-keyword')) {
+        clearTimeout(keywordTimeout);
+        keywordTimeout = setTimeout(() => {
+          window.jobsManager.setFilter('keyword', e.target.value);
+          if (this.currentRoute === '/dashboard') {
+            this.render('Dashboard');
+          }
+        }, 300);
       }
     });
   }
@@ -78,6 +104,9 @@ class Router {
     const container = document.getElementById('page-content');
     if (!container) return;
 
+    // Store modal state before render
+    const modalJobId = this.openModalJobId;
+
     switch (pageName) {
       case 'Landing':
         container.innerHTML = this.renderLanding();
@@ -100,6 +129,11 @@ class Router {
       default:
         container.innerHTML = this.renderDashboard();
     }
+
+    // Re-open modal if it was open
+    if (modalJobId) {
+      setTimeout(() => this.viewJob(modalJobId), 0);
+    }
   }
 
   renderLanding() {
@@ -115,17 +149,204 @@ class Router {
   }
 
   renderDashboard() {
+    if (!window.jobsManager) {
+      return '<div class="page-container"><p>Loading jobs...</p></div>';
+    }
+
+    const jobs = window.jobsManager.applyFilters();
+    const locations = window.jobsManager.getUniqueLocations();
+    const sources = window.jobsManager.getUniqueSources();
+    const filters = window.jobsManager.filters;
+
+    let filterBar = `
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label class="filter-label">Search</label>
+          <input 
+            type="text" 
+            class="filter-input" 
+            id="filter-keyword" 
+            placeholder="Title or company..."
+            value="${filters.keyword}"
+          >
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Location</label>
+          <select class="filter-select" id="filter-location">
+            <option value="">All Locations</option>
+            ${locations.map(loc => `<option value="${loc}" ${filters.location === loc ? 'selected' : ''}>${loc}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Mode</label>
+          <select class="filter-select" id="filter-mode">
+            <option value="">All Modes</option>
+            <option value="Remote" ${filters.mode === 'Remote' ? 'selected' : ''}>Remote</option>
+            <option value="Hybrid" ${filters.mode === 'Hybrid' ? 'selected' : ''}>Hybrid</option>
+            <option value="Onsite" ${filters.mode === 'Onsite' ? 'selected' : ''}>Onsite</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Experience</label>
+          <select class="filter-select" id="filter-experience">
+            <option value="">All Levels</option>
+            <option value="Fresher" ${filters.experience === 'Fresher' ? 'selected' : ''}>Fresher</option>
+            <option value="0-1" ${filters.experience === '0-1' ? 'selected' : ''}>0-1 years</option>
+            <option value="1-3" ${filters.experience === '1-3' ? 'selected' : ''}>1-3 years</option>
+            <option value="3-5" ${filters.experience === '3-5' ? 'selected' : ''}>3-5 years</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Source</label>
+          <select class="filter-select" id="filter-source">
+            <option value="">All Sources</option>
+            ${sources.map(src => `<option value="${src}" ${filters.source === src ? 'selected' : ''}>${src}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Sort</label>
+          <select class="filter-select" id="filter-sort">
+            <option value="latest" ${filters.sort === 'latest' ? 'selected' : ''}>Latest First</option>
+            <option value="oldest" ${filters.sort === 'oldest' ? 'selected' : ''}>Oldest First</option>
+          </select>
+        </div>
+      </div>
+    `;
+
+    let jobsGrid = '';
+    if (jobs.length === 0) {
+      jobsGrid = `
+        <div class="empty-state">
+          <div class="empty-state__title">No jobs found</div>
+          <div class="empty-state__message">Try adjusting your filters to see more results.</div>
+        </div>
+      `;
+    } else {
+      jobsGrid = `
+        <div class="jobs-grid">
+          ${jobs.map(job => this.renderJobCard(job)).join('')}
+        </div>
+      `;
+    }
+
     return `
       <div class="page-container">
         <div class="page-header">
           <h1 class="page-title">Dashboard</h1>
         </div>
-        <div class="empty-state">
-          <div class="empty-state__title">No jobs yet</div>
-          <div class="empty-state__message">In the next step, you will load a realistic dataset.</div>
+        ${filterBar}
+        ${jobsGrid}
+      </div>
+    `;
+  }
+
+  renderJobCard(job) {
+    const isSaved = window.jobsManager.isSaved(job.id);
+    const postedText = job.postedDaysAgo === 0 ? 'Today' : 
+                      job.postedDaysAgo === 1 ? '1 day ago' : 
+                      `${job.postedDaysAgo} days ago`;
+
+    return `
+      <div class="job-card">
+        <div class="job-card__header">
+          <div>
+            <h3 class="job-card__title">${job.title}</h3>
+            <div class="job-card__company">${job.company}</div>
+          </div>
+          <span class="badge badge-accent">${job.source}</span>
+        </div>
+        <div class="job-card__meta">
+          <span class="job-card__meta-item">📍 ${job.location}</span>
+          <span class="job-card__meta-item">${job.mode}</span>
+          <span class="job-card__meta-item">${job.experience}</span>
+        </div>
+        <div class="job-card__footer">
+          <div>
+            <div class="job-card__salary">${job.salaryRange}</div>
+            <div class="job-card__posted">${postedText}</div>
+          </div>
+          <div class="job-card__actions">
+            <button class="btn btn-secondary" style="font-size: var(--font-size-sm); padding: var(--spacing-xs) var(--spacing-sm);" onclick="window.router.viewJob(${job.id})">View</button>
+            <button class="btn ${isSaved ? 'btn-primary' : 'btn-secondary'}" style="font-size: var(--font-size-sm); padding: var(--spacing-xs) var(--spacing-sm);" onclick="window.router.toggleSave(${job.id})">${isSaved ? 'Saved' : 'Save'}</button>
+            <button class="btn btn-primary" style="font-size: var(--font-size-sm); padding: var(--spacing-xs) var(--spacing-sm);" onclick="window.open('${job.applyUrl}', '_blank')">Apply</button>
+          </div>
         </div>
       </div>
     `;
+  }
+
+  viewJob(jobId) {
+    // Close existing modal if any
+    this.closeModal();
+    this.openModalJobId = jobId;
+    
+    const job = window.jobsManager.getJobById(jobId);
+    if (!job) return;
+
+    const modal = `
+      <div class="modal-overlay modal-overlay--visible" id="job-modal" onclick="if(event.target.id === 'job-modal') window.router.closeModal()">
+        <div class="modal">
+          <div class="modal__header">
+            <div>
+              <h2 class="modal__title">${job.title}</h2>
+              <div class="modal__company">${job.company}</div>
+            </div>
+            <button class="modal__close" onclick="window.router.closeModal()">&times;</button>
+          </div>
+          <div class="modal__meta">
+            <span class="modal__meta-item">📍 ${job.location}</span>
+            <span class="modal__meta-item">${job.mode}</span>
+            <span class="modal__meta-item">${job.experience}</span>
+            <span class="modal__meta-item">${job.salaryRange}</span>
+            <span class="badge badge-accent">${job.source}</span>
+          </div>
+          <div class="modal__section">
+            <div class="modal__section-title">Description</div>
+            <div class="modal__description">${job.description}</div>
+          </div>
+          <div class="modal__section">
+            <div class="modal__section-title">Skills</div>
+            <div class="modal__skills">
+              ${job.skills.map(skill => `<span class="modal__skill">${skill}</span>`).join('')}
+            </div>
+          </div>
+          <div class="modal__actions">
+            <button class="btn btn-secondary" onclick="window.router.toggleSave(${job.id})">${window.jobsManager.isSaved(job.id) ? 'Unsave' : 'Save'}</button>
+            <button class="btn btn-primary" onclick="window.open('${job.applyUrl}', '_blank')">Apply Now</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modal);
+  }
+
+  closeModal() {
+    const modal = document.getElementById('job-modal');
+    if (modal) {
+      modal.remove();
+    }
+    this.openModalJobId = null;
+  }
+
+  toggleSave(jobId) {
+    const wasModalOpen = this.openModalJobId === jobId;
+    
+    if (window.jobsManager.isSaved(jobId)) {
+      window.jobsManager.unsaveJob(jobId);
+    } else {
+      window.jobsManager.saveJob(jobId);
+    }
+    
+    // Re-render current page
+    const path = window.location.pathname;
+    const route = this.routes[path] || this.routes['/'];
+    this.render(route);
+    
+    // Re-open modal if it was open
+    if (wasModalOpen) {
+      setTimeout(() => this.viewJob(jobId), 0);
+    }
   }
 
   renderSettings() {
@@ -190,15 +411,34 @@ class Router {
   }
 
   renderSaved() {
+    if (!window.jobsManager) {
+      return '<div class="page-container"><p>Loading...</p></div>';
+    }
+
+    const savedJobs = window.jobsManager.getSavedJobs();
+
+    let jobsGrid = '';
+    if (savedJobs.length === 0) {
+      jobsGrid = `
+        <div class="empty-state">
+          <div class="empty-state__title">No saved jobs</div>
+          <div class="empty-state__message">Jobs you save will appear here.</div>
+        </div>
+      `;
+    } else {
+      jobsGrid = `
+        <div class="jobs-grid">
+          ${savedJobs.map(job => this.renderJobCard(job)).join('')}
+        </div>
+      `;
+    }
+
     return `
       <div class="page-container">
         <div class="page-header">
           <h1 class="page-title">Saved</h1>
         </div>
-        <div class="empty-state">
-          <div class="empty-state__title">No saved jobs</div>
-          <div class="empty-state__message">Jobs you save will appear here.</div>
-        </div>
+        ${jobsGrid}
       </div>
     `;
   }
