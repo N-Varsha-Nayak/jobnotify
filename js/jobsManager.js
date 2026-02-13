@@ -11,7 +11,8 @@ class JobsManager {
       experience: '',
       source: '',
       sort: 'latest',
-      showOnlyMatches: false
+      showOnlyMatches: false,
+      status: ''
     };
     this.loadJobs();
     this.loadSavedJobs();
@@ -112,6 +113,14 @@ class JobsManager {
       const prefs = window.preferencesManager.getPreferences();
       const minScore = prefs.minMatchScore || 40;
       filtered = filtered.filter(job => (job.matchScore || 0) >= minScore);
+    }
+
+    // Status filter
+    if (this.filters.status && window.statusManager) {
+      filtered = filtered.filter(job => {
+        const jobStatus = window.statusManager.getStatus(job.id);
+        return jobStatus === this.filters.status;
+      });
     }
 
     // Sort

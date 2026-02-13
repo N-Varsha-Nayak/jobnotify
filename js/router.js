@@ -38,7 +38,7 @@ class Router {
 
     // Handle filter changes
     document.addEventListener('change', (e) => {
-      if (e.target.matches('#filter-keyword, #filter-location, #filter-mode, #filter-experience, #filter-source, #filter-sort')) {
+      if (e.target.matches('#filter-keyword, #filter-location, #filter-mode, #filter-experience, #filter-source, #filter-sort, #filter-status')) {
         const filterType = e.target.id.replace('filter-', '');
         window.jobsManager.setFilter(filterType, e.target.value);
         if (this.currentRoute === '/dashboard') {
@@ -251,6 +251,16 @@ class Router {
           </select>
         </div>
         <div class="filter-group">
+          <label class="filter-label">Status</label>
+          <select class="filter-select" id="filter-status">
+            <option value="">All</option>
+            <option value="Not Applied" ${filters.status === 'Not Applied' ? 'selected' : ''}>Not Applied</option>
+            <option value="Applied" ${filters.status === 'Applied' ? 'selected' : ''}>Applied</option>
+            <option value="Rejected" ${filters.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
+            <option value="Selected" ${filters.status === 'Selected' ? 'selected' : ''}>Selected</option>
+          </select>
+        </div>
+        <div class="filter-group">
           <label class="filter-label">Sort</label>
           <select class="filter-select" id="filter-sort">
             <option value="latest" ${filters.sort === 'latest' ? 'selected' : ''}>Latest First</option>
@@ -325,6 +335,7 @@ class Router {
           <span class="job-card__meta-item">${job.mode}</span>
           <span class="job-card__meta-item">${job.experience}</span>
         </div>
+        ${this.renderStatusButtons(job.id)}
         <div class="job-card__footer">
           <div>
             <div class="job-card__salary">${job.salaryRange}</div>
@@ -338,6 +349,74 @@ class Router {
         </div>
       </div>
     `;
+  }
+
+  renderStatusButtons(jobId) {
+    const status = window.statusManager ? window.statusManager.getStatus(jobId) : 'Not Applied';
+    const statuses = ['Not Applied', 'Applied', 'Rejected', 'Selected'];
+    
+    return `
+      <div class="status-group">
+        ${statuses.map(s => {
+          const isActive = s === status;
+          const btnClass = `status-btn status-btn--${s.toLowerCase().replace(' ', '-')} ${isActive ? 'status-btn--active' : ''}`;
+          return `<button class="${btnClass}" onclick="window.router.setJobStatus(${jobId}, '${s}')">${s}</button>`;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  setJobStatus(jobId, status) {
+    if (!window.statusManager) {
+      return;
+    }
+
+    const wasModalOpen = this.openModalJobId === jobId;
+    
+    window.statusManager.setStatus(jobId, status);
+    
+    // Show toast notification
+    this.showToast(`Status updated: ${status}`);
+    
+    // Re-render current page
+    const path = window.location.pathname;
+    const route = this.routes[path] || this.routes['/'];
+    this.render(route);
+    
+    // Re-open modal if it was open
+    if (wasModalOpen) {
+      setTimeout(() => this.viewJob(jobId), 0);
+    }
+  }
+
+  showToast(message) {
+    // Remove existing toast if any
+    const existingToast = document.getElementById('status-toast');
+    if (existingToast) {
+      existingToast.remove();
+    }
+
+    // Create toast
+    const toast = document.createElement('div');
+    toast.id = 'status-toast';
+    toast.className = 'toast';
+    toast.innerHTML = `<p class="toast__message">${message}</p>`;
+    document.body.appendChild(toast);
+
+    // Show toast
+    setTimeout(() => {
+      toast.classList.add('toast--visible');
+    }, 10);
+
+    // Hide and remove toast after 3 seconds
+    setTimeout(() => {
+      toast.classList.remove('toast--visible');
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 200);
+    }, 3000);
   }
 
   viewJob(jobId) {
@@ -379,6 +458,10 @@ class Router {
             <div class="modal__skills">
               ${job.skills.map(skill => `<span class="modal__skill">${skill}</span>`).join('')}
             </div>
+          </div>
+          <div class="modal__section">
+            <div class="modal__section-title">Status</div>
+            ${this.renderStatusButtons(job.id)}
           </div>
           <div class="modal__actions">
             <button class="btn btn-secondary" onclick="window.router.toggleSave(${job.id})">${window.jobsManager.isSaved(job.id) ? 'Unsave' : 'Save'}</button>
@@ -708,6 +791,51 @@ class Router {
       `;
     }
 
+    // Recent Status Updates section
+    let statusUpdatesSection = '';
+    if (window.statusManager) {
+      const recentUpdates = window.statusManager.getRecentStatusUpdates(10);
+      if (recentUpdates.length > 0) {
+        statusUpdatesSection = `
+          <div class="status-updates">
+            <h2 class="status-updates__title">Recent Status Updates</h2>
+            <div class="card">
+              ${recentUpdates.map(update => {
+                const job = window.jobsManager ? window.jobsManager.getJobById(update.jobId) : null;
+                if (!job) return '';
+                
+                const updateDate = new Date(update.date);
+                const formattedDate = updateDate.toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                });
+                
+                const badgeStyle = window.statusManager.getStatusBadgeStyle(update.status);
+                const badgeClass = window.statusManager.getStatusBadgeClass(update.status);
+                
+                return `
+                  <div class="status-update-item">
+                    <div class="status-update-item__info">
+                      <div class="status-update-item__title">${job.title}</div>
+                      <div class="status-update-item__company">${job.company}</div>
+                    </div>
+                    <div class="status-update-item__meta">
+                      <span class="badge ${badgeClass}" style="background-color: ${badgeStyle.backgroundColor}; color: ${badgeStyle.color};">
+                        ${update.status}
+                      </span>
+                      <span class="status-update-item__date">${formattedDate}</span>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+    }
+
     return `
       <div class="page-container">
         <div class="page-header">
@@ -715,6 +843,7 @@ class Router {
         </div>
         ${generateSection}
         ${digestContent}
+        ${statusUpdatesSection}
       </div>
     `;
   }

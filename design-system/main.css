@@ -10,6 +10,7 @@
 @import './landing.css';
 @import './jobs.css';
 @import './digest.css';
+@import './status.css';
 
 /* Utility Classes */
 .container {

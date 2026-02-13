@@ -1,0 +1,159 @@
+/* KodNest Premium Build System - Status Styles */
+
+/* Status Button Group */
+.status-group {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+  margin-top: var(--spacing-xs);
+}
+
+.status-btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  border: 1px solid rgba(17, 17, 17, 0.2);
+  border-radius: var(--radius-sm);
+  background-color: #FFFFFF;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.status-btn:hover {
+  border-color: var(--color-accent);
+}
+
+.status-btn--active {
+  border-color: transparent;
+  color: #FFFFFF;
+}
+
+.status-btn--not-applied.status-btn--active {
+  background-color: rgba(17, 17, 17, 0.8);
+}
+
+.status-btn--applied.status-btn--active {
+  background-color: #0064C8;
+}
+
+.status-btn--rejected.status-btn--active {
+  background-color: var(--color-accent);
+}
+
+.status-btn--selected.status-btn--active {
+  background-color: var(--color-success);
+}
+
+/* Status Badges */
+.badge-applied {
+  background-color: rgba(0, 100, 200, 0.1);
+  color: #0064C8;
+}
+
+.badge-rejected {
+  background-color: rgba(139, 0, 0, 0.1);
+  color: var(--color-accent);
+}
+
+/* Toast Notification */
+.toast {
+  position: fixed;
+  bottom: var(--spacing-lg);
+  right: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: #FFFFFF;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  z-index: 2000;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all var(--transition-base);
+  max-width: 300px;
+}
+
+.toast--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast__message {
+  margin: 0;
+}
+
+/* Status Updates Section */
+.status-updates {
+  margin-top: var(--spacing-xl);
+}
+
+.status-updates__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.status-update-item {
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.status-update-item:last-child {
+  border-bottom: none;
+}
+
+.status-update-item__info {
+  flex: 1;
+}
+
+.status-update-item__title {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.status-update-item__company {
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  opacity: 0.7;
+}
+
+.status-update-item__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.status-update-item__date {
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+  .toast {
+    right: var(--spacing-md);
+    bottom: var(--spacing-md);
+    max-width: calc(100% - var(--spacing-md) * 2);
+  }
+
+  .status-update-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
