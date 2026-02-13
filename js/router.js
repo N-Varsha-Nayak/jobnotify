@@ -16,7 +16,9 @@ class Router {
       '/saved': 'Saved',
       '/digest': 'Digest',
       '/settings': 'Settings',
-      '/proof': 'Proof'
+      '/proof': 'Proof',
+      '/jt/07-test': 'Test',
+      '/jt/08-ship': 'Ship'
     };
 
     // Handle initial route
@@ -85,6 +87,14 @@ class Router {
   }
 
   navigate(path) {
+    // Check ship lock
+    if (path === '/jt/08-ship') {
+      if (window.testManager && !window.testManager.getAllTestsPassed()) {
+        alert('All tests must pass before shipping. Complete the test checklist first.');
+        return;
+      }
+    }
+    
     if (this.routes[path]) {
       window.history.pushState({}, '', path);
       this.currentRoute = path;
@@ -94,6 +104,19 @@ class Router {
 
   handleRoute() {
     const path = window.location.pathname;
+    
+    // Check ship lock
+    if (path === '/jt/08-ship') {
+      if (window.testManager && !window.testManager.getAllTestsPassed()) {
+        // Redirect to test page if not all tests passed
+        window.history.replaceState({}, '', '/jt/07-test');
+        this.currentRoute = '/jt/07-test';
+        this.render('Test');
+        this.updateNavigation();
+        return;
+      }
+    }
+    
     const route = this.routes[path] || this.routes['/'];
     
     this.currentRoute = path;
@@ -147,6 +170,12 @@ class Router {
         break;
       case 'Proof':
         container.innerHTML = this.renderProof();
+        break;
+      case 'Test':
+        container.innerHTML = this.renderTest();
+        break;
+      case 'Ship':
+        container.innerHTML = this.renderShip();
         break;
       default:
         container.innerHTML = this.renderDashboard();
@@ -932,6 +961,121 @@ class Router {
         </div>
       </div>
     `;
+  }
+
+  renderTest() {
+    if (!window.testManager) {
+      return '<div class="page-container"><p>Loading test checklist...</p></div>';
+    }
+
+    const testStatus = window.testManager.getTestStatus();
+    const passedCount = window.testManager.getPassedCount();
+    const totalTests = window.testManager.getTests().length;
+    const allPassed = window.testManager.getAllTestsPassed();
+    const tests = window.testManager.getTests();
+
+    const summaryWarning = allPassed 
+      ? `<div class="test-summary__success">✓ All tests passed! Ready to ship.</div>`
+      : `<div class="test-summary__warning">Resolve all issues before shipping.</div>`;
+
+    const testItems = tests.map(test => {
+      const isPassed = testStatus[test.id] === true;
+      return `
+        <div class="test-item ${isPassed ? 'test-item--passed' : ''}">
+          <input 
+            type="checkbox" 
+            id="test-${test.id}" 
+            class="test-item__checkbox"
+            ${isPassed ? 'checked' : ''}
+            onchange="window.router.toggleTest('${test.id}')"
+          >
+          <div class="test-item__content">
+            <label for="test-${test.id}" class="test-item__label">${test.label}</label>
+            ${test.tooltip ? `<div class="test-item__tooltip">${test.tooltip}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="page-container">
+        <div class="page-header">
+          <h1 class="page-title">Test Checklist</h1>
+        </div>
+        <div class="test-container">
+          <div class="test-summary">
+            <h2 class="test-summary__title">Test Results</h2>
+            <div class="test-summary__count">Tests Passed: ${passedCount} / ${totalTests}</div>
+            ${summaryWarning}
+          </div>
+          
+          <div class="test-checklist">
+            <h2 class="test-checklist__title">Test Items</h2>
+            ${testItems}
+            
+            <div class="test-actions">
+              <button class="btn btn-secondary" onclick="window.router.resetTests()">Reset Test Status</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderShip() {
+    const allPassed = window.testManager ? window.testManager.getAllTestsPassed() : false;
+
+    if (!allPassed) {
+      return `
+        <div class="page-container">
+          <div class="ship-locked">
+            <h1 class="ship-locked__title">Ship Locked</h1>
+            <p class="ship-locked__message">
+              All tests must pass before shipping. Complete the test checklist first.
+            </p>
+            <button class="btn btn-primary" data-route="/jt/07-test">Go to Test Checklist</button>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="page-container">
+        <div class="ship-unlocked">
+          <h1 class="ship-unlocked__title">Ready to Ship</h1>
+          <p class="ship-unlocked__message">
+            All tests have passed. The application is ready for deployment.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  toggleTest(testId) {
+    if (!window.testManager) {
+      return;
+    }
+
+    const currentStatus = window.testManager.getTestStatus();
+    const newStatus = !currentStatus[testId];
+    
+    window.testManager.setTestStatus(testId, newStatus);
+    
+    // Re-render test page
+    if (this.currentRoute === '/jt/07-test') {
+      this.render('Test');
+    }
+  }
+
+  resetTests() {
+    if (!window.testManager) {
+      return;
+    }
+
+    if (confirm('Are you sure you want to reset all test statuses?')) {
+      window.testManager.resetTests();
+      this.render('Test');
+    }
   }
 }
 

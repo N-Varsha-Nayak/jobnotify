@@ -11,6 +11,7 @@
 @import './jobs.css';
 @import './digest.css';
 @import './status.css';
+@import './test.css';
 
 /* Utility Classes */
 .container {

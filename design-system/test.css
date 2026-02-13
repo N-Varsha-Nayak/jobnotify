@@ -1,0 +1,179 @@
+/* KodNest Premium Build System - Test Checklist Styles */
+
+.test-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.test-summary {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+.test-summary__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: 400;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.test-summary__count {
+  font-family: var(--font-body);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.test-summary__warning {
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-warning);
+  padding: var(--spacing-sm);
+  background-color: rgba(184, 134, 11, 0.1);
+  border-radius: var(--radius-md);
+  margin-top: var(--spacing-sm);
+}
+
+.test-summary__success {
+  font-family: var(--font-body);
+  font-size: var(--font-size-sm);
+  color: var(--color-success);
+  padding: var(--spacing-sm);
+  background-color: rgba(74, 103, 65, 0.1);
+  border-radius: var(--radius-md);
+  margin-top: var(--spacing-sm);
+}
+
+.test-checklist {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(17, 17, 17, 0.1);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+}
+
+.test-checklist__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 400;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.test-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid rgba(17, 17, 17, 0.05);
+  transition: background-color var(--transition-fast);
+}
+
+.test-item:last-child {
+  border-bottom: none;
+}
+
+.test-item:hover {
+  background-color: rgba(17, 17, 17, 0.02);
+}
+
+.test-item__checkbox {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--color-accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.test-item__content {
+  flex: 1;
+}
+
+.test-item__label {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
+
+.test-item__tooltip {
+  font-family: var(--font-body);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.test-item--passed .test-item__label {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.test-actions {
+  margin-top: var(--spacing-lg);
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.ship-locked {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(139, 0, 0, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  text-align: center;
+}
+
+.ship-locked__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-3xl);
+  font-weight: 400;
+  color: var(--color-accent);
+  margin-bottom: var(--spacing-md);
+}
+
+.ship-locked__message {
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg);
+  max-width: var(--max-width-text);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ship-locked__link {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.ship-unlocked {
+  background-color: #FFFFFF;
+  border: 1px solid rgba(74, 103, 65, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  text-align: center;
+}
+
+.ship-unlocked__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-3xl);
+  font-weight: 400;
+  color: var(--color-success);
+  margin-bottom: var(--spacing-md);
+}
+
+.ship-unlocked__message {
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg);
+}
