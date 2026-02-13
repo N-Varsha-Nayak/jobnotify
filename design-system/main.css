@@ -4,6 +4,8 @@
 @import './base.css';
 @import './components.css';
 @import './layout.css';
+@import './navigation.css';
+@import './pages.css';
 
 /* Utility Classes */
 .container {

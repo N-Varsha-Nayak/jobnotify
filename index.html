@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Notification Tracker - KodNest Premium Build System</title>
+  <link rel="stylesheet" href="design-system/main.css">
+  <link rel="stylesheet" href="design-system/navigation.css">
+  <link rel="stylesheet" href="design-system/pages.css">
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="nav-bar">
+    <a href="/" class="nav-bar__brand" data-route="/">Job Notification Tracker</a>
+    
+    <button class="nav-bar__toggle" id="nav-toggle" aria-label="Toggle navigation">
+      <span class="nav-bar__toggle-line"></span>
+      <span class="nav-bar__toggle-line"></span>
+      <span class="nav-bar__toggle-line"></span>
+    </button>
+
+    <ul class="nav-bar__links" id="nav-links">
+      <li>
+        <a href="/dashboard" class="nav-bar__link" data-route="/dashboard">Dashboard</a>
+      </li>
+      <li>
+        <a href="/saved" class="nav-bar__link" data-route="/saved">Saved</a>
+      </li>
+      <li>
+        <a href="/digest" class="nav-bar__link" data-route="/digest">Digest</a>
+      </li>
+      <li>
+        <a href="/settings" class="nav-bar__link" data-route="/settings">Settings</a>
+      </li>
+      <li>
+        <a href="/proof" class="nav-bar__link" data-route="/proof">Proof</a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Page Content Container -->
+  <main id="page-content">
+    <!-- Content will be rendered here by router -->
+  </main>
+
+  <script src="js/router.js"></script>
+  <script>
+    // Hamburger menu toggle
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('nav-toggle');
+      const links = document.getElementById('nav-links');
+
+      if (toggle && links) {
+        toggle.addEventListener('click', () => {
+          toggle.classList.toggle('nav-bar__toggle--open');
+          links.classList.toggle('nav-bar__links--open');
+        });
+
+        // Close menu when clicking a link on mobile
+        links.querySelectorAll('.nav-bar__link').forEach(link => {
+          link.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+              toggle.classList.remove('nav-bar__toggle--open');
+              links.classList.remove('nav-bar__links--open');
+            }
+          });
+        });
+      }
+    });
+  </script>
+</body>
+</html>

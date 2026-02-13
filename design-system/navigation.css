@@ -1,0 +1,121 @@
+/* KodNest Premium Build System - Navigation Styles */
+
+/* Top Navigation Bar */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: #FFFFFF;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.1);
+}
+
+.nav-bar__brand {
+  font-family: var(--font-body);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-decoration: none;
+}
+
+.nav-bar__links {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-bar__link {
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  padding: var(--spacing-xs) 0;
+  position: relative;
+  transition: color var(--transition-fast);
+}
+
+.nav-bar__link:hover {
+  color: var(--color-accent);
+}
+
+.nav-bar__link--active {
+  color: var(--color-accent);
+}
+
+.nav-bar__link--active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-accent);
+}
+
+/* Hamburger Menu Button */
+.nav-bar__toggle {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+}
+
+.nav-bar__toggle-line {
+  width: 24px;
+  height: 2px;
+  background-color: var(--color-text-primary);
+  transition: all var(--transition-base);
+}
+
+.nav-bar__toggle--open .nav-bar__toggle-line:nth-child(1) {
+  transform: rotate(45deg) translate(6px, 6px);
+}
+
+.nav-bar__toggle--open .nav-bar__toggle-line:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-bar__toggle--open .nav-bar__toggle-line:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* Mobile Navigation */
+@media (max-width: 768px) {
+  .nav-bar {
+    flex-wrap: wrap;
+  }
+
+  .nav-bar__toggle {
+    display: flex;
+  }
+
+  .nav-bar__links {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    gap: var(--spacing-sm);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid rgba(17, 17, 17, 0.1);
+    margin-top: var(--spacing-md);
+  }
+
+  .nav-bar__links--open {
+    display: flex;
+  }
+
+  .nav-bar__link {
+    width: 100%;
+    padding: var(--spacing-sm) 0;
+  }
+
+  .nav-bar__link--active::after {
+    left: 0;
+    right: 0;
+  }
+}
