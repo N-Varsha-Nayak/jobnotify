@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KodNest Premium Build System - Design System Example</title>
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="top-bar__left">Project Name</div>
+    <div class="top-bar__center">
+      <span>Step</span>
+      <span>2</span>
+      <span>/</span>
+      <span>5</span>
+    </div>
+    <div class="top-bar__right">
+      <span class="badge badge-warning">In Progress</span>
+    </div>
+  </div>
+
+  <!-- Context Header -->
+  <div class="context-header">
+    <h1 class="context-header__headline">Build Your Application</h1>
+    <p class="context-header__subtext">Configure your project settings and begin building.</p>
+  </div>
+
+  <!-- Workspace -->
+  <div class="workspace">
+    <!-- Primary Workspace -->
+    <div class="workspace__primary">
+      <div class="card">
+        <h3 class="mb-sm">Primary Content Area</h3>
+        <p class="mb-md">This is where the main product interaction happens. Clean cards, predictable components, no crowding.</p>
+        
+        <div class="mb-md">
+          <label class="mb-sm" style="display: block; font-weight: 500;">Input Example</label>
+          <input type="text" class="input" placeholder="Enter text here">
+        </div>
+
+        <div class="mb-md">
+          <label class="mb-sm" style="display: block; font-weight: 500;">Textarea Example</label>
+          <textarea class="textarea" rows="4" placeholder="Enter longer text here"></textarea>
+        </div>
+
+        <div class="flex gap-sm">
+          <button class="btn btn-primary">Primary Button</button>
+          <button class="btn btn-secondary">Secondary Button</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="mb-sm">Another Card</h3>
+        <p>Cards have subtle borders, no drop shadows, balanced padding. They feel calm and intentional.</p>
+      </div>
+    </div>
+
+    <!-- Secondary Panel -->
+    <div class="workspace__secondary">
+      <div class="panel-section">
+        <div class="panel-section__title">Step Explanation</div>
+        <div class="panel-section__content">
+          This is a short explanation of what this step does. It's concise and helpful.
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-section__title">Copyable Prompt</div>
+        <div class="prompt-box">
+          npm install --save react react-dom
+        </div>
+        <div class="prompt-box__actions">
+          <button class="btn btn-secondary" style="font-size: var(--font-size-sm); padding: var(--spacing-xs) var(--spacing-sm);">Copy</button>
+          <button class="btn btn-secondary" style="font-size: var(--font-size-sm); padding: var(--spacing-xs) var(--spacing-sm);">Build in Lovable</button>
+          <button class="btn btn-secondary" style="font-size: var(--font-size-sm); padding: var(--spacing-xs) var(--spacing-sm);">It Worked</button>
+          <button class="btn btn-secondary" style="font-size: var(--font-size-sm); padding: var(--spacing-xs) var(--spacing-sm);">Error</button>
+          <button class="btn btn-secondary" style="font-size: var(--font-size-sm); padding: var(--spacing-xs) var(--spacing-sm);">Add Screenshot</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4 class="mb-sm">Status Badges</h4>
+        <div class="flex flex-col gap-sm">
+          <span class="badge badge-default">Not Started</span>
+          <span class="badge badge-warning">In Progress</span>
+          <span class="badge badge-success">Shipped</span>
+          <span class="badge badge-accent">Error</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Proof Footer -->
+  <div class="proof-footer">
+    <div class="proof-footer__title">Proof Checklist</div>
+    <div class="proof-footer__checklist">
+      <div class="proof-item">
+        <input type="checkbox" id="proof-ui" class="proof-item__checkbox">
+        <label for="proof-ui" class="proof-item__label">UI Built</label>
+      </div>
+      <div class="proof-item">
+        <input type="checkbox" id="proof-logic" class="proof-item__checkbox">
+        <label for="proof-logic" class="proof-item__label">Logic Working</label>
+      </div>
+      <div class="proof-item">
+        <input type="checkbox" id="proof-test" class="proof-item__checkbox">
+        <label for="proof-test" class="proof-item__label">Test Passed</label>
+      </div>
+      <div class="proof-item">
+        <input type="checkbox" id="proof-deployed" class="proof-item__checkbox">
+        <label for="proof-deployed" class="proof-item__label">Deployed</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State Example (commented out, can be shown when needed) -->
+  <!--
+  <div class="workspace">
+    <div class="workspace__primary">
+      <div class="error-state">
+        <div class="error-state__title">Something went wrong</div>
+        <div class="error-state__message">
+          The build process encountered an error. This is not your fault - it's a system issue that we can fix together.
+        </div>
+        <div class="error-state__action">
+          Try checking your configuration file and ensure all required fields are filled.
+        </div>
+      </div>
+    </div>
+  </div>
+  -->
+
+  <!-- Empty State Example (commented out, can be shown when needed) -->
+  <!--
+  <div class="workspace">
+    <div class="workspace__primary">
+      <div class="empty-state">
+        <div class="empty-state__title">No projects yet</div>
+        <div class="empty-state__message">
+          Get started by creating your first project. It only takes a few minutes.
+        </div>
+        <div class="empty-state__action">
+          <button class="btn btn-primary">Create Project</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  -->
+</body>
+</html>
